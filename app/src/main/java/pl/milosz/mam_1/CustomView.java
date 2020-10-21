@@ -9,12 +9,22 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Toast;
 
+import java.text.DecimalFormat;
+import java.util.Arrays;
+
 class CustomView extends View {
     float x, y, z, azimut, pitch, roll;
     Double lat, lon;
     //Gmach główny
-    float bearingGG;
+    float bearingGG, angleGG;
     float [] vectorGG = new float[3];
+    //WETI
+    float bearingWETI, angleWETI;
+    float [] vectorWETI = new float[3];
+
+    //Olivia Business Center
+    float bearingOBC, angleOBC;
+    float [] vectorOBC = new float[3];
 
     public CustomView(Context context) {
         super(context);
@@ -29,14 +39,27 @@ class CustomView extends View {
         this.pitch=pitch;
     }
 
-    public void setLocationData(Double lat, Double lon){
-        this.lat = lat;
-        this.lon = lon;
-    }
-
-    public void setGGData(float bearing, float[] vector){
+    public void setGGData(float bearing, float[] vector, float angle){
         this.bearingGG=bearing;
         this.vectorGG=vector;
+        this.angleGG=angle;
+    }
+
+    public void setWETIData(float bearing, float[] vector, float angle){
+        this.bearingWETI=bearing;
+        this.vectorWETI=vector;
+        this.angleWETI=angle;
+    }
+
+    public void setOBCData(float bearing, float[] vector, float angle){
+        this.bearingOBC=bearing;
+        this.vectorOBC=vector;
+        this.angleOBC=angle;
+    }
+
+    public void setLocationData(Double lat, Double lon){
+        this.lat=lat;
+        this.lon=lon;
     }
 
     @Override
@@ -55,29 +78,44 @@ class CustomView extends View {
         paint.setColor(Color.WHITE);
         paint.setTextSize(60);
         // azimut, roll, pitch
-            canvas.drawText("X: "+x, 200, 100, paint);
-            canvas.drawText("Y: "+y, 200, 150, paint);
-            canvas.drawText("Z: "+z, 200, 200, paint);
+        canvas.drawText("X: "+x, 200, 100, paint);
+        canvas.drawText("Y: "+y, 200, 150, paint);
+        canvas.drawText("Z: "+z, 200, 200, paint);
 
-            // x,y,z
-            canvas.drawText("Azimut: "+azimut, 200, 250, paint);
-            canvas.drawText("Roll: "+roll, 200, 300, paint);
-            canvas.drawText("Pitch: "+pitch, 200, 350, paint);
+        // x,y,z
+        canvas.drawText("Azimut: "+azimut, 200, 250, paint);
+        canvas.drawText("Roll: "+roll, 200, 300, paint);
+        canvas.drawText("Pitch: "+pitch, 200, 350, paint);
 
-            canvas.drawText("Lat: "+lat, 600, 800, paint);
-            canvas.drawText("Lon: "+lon, 600, 850, paint);
+        // Lokacja
+        canvas.drawText("Lat: "+lat, 600, 750, paint);
+        canvas.drawText("Lon: "+lon, 600, 800, paint);
 
-            //Gmach Główny
-            canvas.drawText("Gmach Główny: ", 600, 950, paint);
-            canvas.drawText("Bearing: "+bearingGG, 600, 1000, paint);
-            canvas.drawText("Wektor: [0]:"+vectorGG[0]+" [1]:"+vectorGG[1]+" [2]:"+vectorGG[2], 600, 1050, paint);
-            canvas.drawText("Kąt: "+0.0f, 600, 1100, paint);
+        //Gmach Główny
+        canvas.drawText("Gmach Główny: ", 600, 950, paint);
+        canvas.drawText("Bearing: "+bearingGG, 600, 1000, paint);
+        canvas.drawText("Wektor:"+ returnStringArray(vectorGG), 600, 1050, paint);
+        canvas.drawText("Kąt: "+angleGG, 600, 1100, paint);
 
-            //WETI
-            canvas.drawText("WETI: ", 600, 1200, paint);
-            canvas.drawText("Bearing: "+0.0f, 600, 1250, paint);
-            canvas.drawText("Wektor: "+0.0f, 600, 1300, paint);
-            canvas.drawText("Kąt: "+0.0f, 600, 1350, paint);
+        //WETI
+        canvas.drawText("WETI: ", 600, 1200, paint);
+        canvas.drawText("Bearing: "+bearingWETI, 600, 1250, paint);
+        canvas.drawText("Wektor: "+returnStringArray(vectorWETI), 600, 1300, paint);
+        canvas.drawText("Kąt: "+angleWETI, 600, 1350, paint);
 
+        //Olivia Business Centre
+        canvas.drawText("Olivia Business Centre: ", 600, 1450, paint);
+        canvas.drawText("Bearing: "+bearingOBC, 600, 1500, paint);
+        canvas.drawText("Wektor: "+returnStringArray(vectorOBC), 600, 1550, paint);
+        canvas.drawText("Kąt: "+angleOBC, 600, 1600, paint);
+    }
+
+    public String returnStringArray(float[] array){
+        DecimalFormat df = new DecimalFormat("0.00");
+        String s="";
+        for(Float item : array){
+            s+=(df.format(item)+" ");
+        }
+        return s;
     }
 }

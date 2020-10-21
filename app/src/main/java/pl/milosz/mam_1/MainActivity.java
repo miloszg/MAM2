@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     Location userLocation;
     Location GGLocation;
     Location WETILocation;
+    Location OBCLocation;
 
     //Camera
     FrameLayout frame;
@@ -84,22 +85,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         previewCamera = new PreviewCamera(this, camera);
         frame.addView(previewCamera);
 
-
+        // na wszelki wypadek ustawiamy lokacje, która potem zostanie nadpisana
         userLocation = new Location("Provider");
+        userLocation.setLatitude(54.391346);
+        userLocation.setLatitude(18.569857);
+
         GGLocation = new Location("Provider");
         GGLocation.setLatitude(54.371482);
         GGLocation.setLongitude(18.619138);
         WETILocation = new Location("Provider");
         WETILocation.setLatitude(54.371659);
         WETILocation.setLongitude(18.612709);
+        OBCLocation = new Location("Provider");
+        OBCLocation.setLatitude(54.403179);
+        OBCLocation.setLongitude(18.570772);
 
         GetLocation();
-
     }
 
 
     private void GetLocation() {
-        LocationRequest locationRequest = new LocationRequest();
+        final LocationRequest locationRequest = new LocationRequest();
         locationRequest.setInterval(3000);
         locationRequest.setFastestInterval(1000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -111,30 +117,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 5);
         }
         LocationServices.getFusedLocationProviderClient(this)
-                .requestLocationUpdates(locationRequest, new LocationCallback() {
-                    @Override
-                    public void onLocationResult(LocationResult locationResult) {
-                        super.onLocationResult(locationResult);
-                        if(locationResult !=null && locationResult.getLocations().size() > 0){
-                            int latestLocationIndex = locationResult.getLocations().size()-1;
-                            double lat = locationResult.getLocations().get(latestLocationIndex).getLatitude();
-                            double lon = locationResult.getLocations().get(latestLocationIndex).getLongitude();
-                            Log.i("DUPA", "onLocationResult: "+lat+" "+lon);
-                            userLocation.setLatitude(lat);
-                            userLocation.setLongitude(lon);
-                            // 180 stopni to PI radianów, więc 1 stopień - PI/180 radianów
-                            float bearingGG = userLocation.bearingTo(GGLocation);
-                            float[] vectorGG= new float[3];
-                            vectorGG[0] = (float) Math.sin(Math.toRadians(bearingGG));
-                            vectorGG[1] = (float) Math.cos(Math.toRadians(bearingGG));
-                            vectorGG[2] = 0.0f;
-
-                            customView.setGGData(bearingGG, vectorGG);
-                            customView.setLocationData(lat, lon);
-                            customView.invalidate();
-                        }
-                    }
-                }, Looper.getMainLooper());
+               .requestLocationUpdates(locationRequest, new LocationCallback(){
+                   @Override
+                   public void onLocationResult(LocationResult locationResult) {
+                       super.onLocationResult(locationResult);
+                       if(locationResult !=null && locationResult.getLocations().size() > 0){
+                           int latestLocationIndex = locationResult.getLocations().size()-1;
+                           double lat = locationResult.getLocations().get(latestLocationIndex).getLatitude();
+                           double lon = locationResult.getLocations().get(latestLocationIndex).getLongitude();
+                           userLocation.setLatitude(lat);
+                           userLocation.setLongitude(lon);
+                           customView.setLocationData(lat,lon);
+                           customView.invalidate();
+                       }
+                   }
+               }, Looper.getMainLooper());
     }
 
     protected void onResume() {
@@ -169,6 +166,47 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
+                float[] cameraVector = {0, 0, 1};
+                float[] deviceVector = new float[3];
+                deviceVector[0] = R[0]*cameraVector[0] +
+                        R[1]*cameraVector[1] +
+                        R[2]*cameraVector[2];
+                deviceVector[1] = R[3]*cameraVector[0] +
+                        R[4]*cameraVector[1] +
+                        R[5]*cameraVector[2];
+                deviceVector[2] = R[6]*cameraVector[0] +
+                        R[7]*cameraVector[1] +
+                        R[8]*cameraVector[2];
+
+                if(userLocation!=null){
+                    //Log.i("DUPAAA", String.valueOf(userLocation.getLatitude())+" "+String.valueOf(userLocation.getLongitude()));
+                    // GMACH GLOWNY
+                    float bearingGG = userLocation.bearingTo(GGLocation);
+                    float[] vectorGG= new float[3];
+                    vectorGG[0] = (float) Math.sin(Math.toRadians(bearingGG));
+                    vectorGG[1] = (float) Math.cos(Math.toRadians(bearingGG));
+                    vectorGG[2] = 0.0f;
+                    float angleGG = (float) Math.toDegrees(getAngle(vectorGG,deviceVector));
+                    customView.setGGData(bearingGG, vectorGG, angleGG);
+
+                    //WETI
+                    float bearingWETI = userLocation.bearingTo(WETILocation);
+                    float[] vectorWETI= new float[3];
+                    vectorWETI[0] = (float) Math.sin(Math.toRadians(bearingWETI));
+                    vectorWETI[1] = (float) Math.cos(Math.toRadians(bearingWETI));
+                    vectorWETI[2] = 0.0f;
+                    float angleWETI = (float) Math.toDegrees(getAngle(vectorWETI,deviceVector));
+                    customView.setWETIData(bearingWETI, vectorWETI, angleWETI);
+
+                    //Olivia Business Centre
+                    float bearingOBC = userLocation.bearingTo(OBCLocation);
+                    float[] vectorOBC= new float[3];
+                    vectorOBC[0] = (float) Math.sin(Math.toRadians(bearingOBC));
+                    vectorOBC[1] = (float) Math.cos(Math.toRadians(bearingOBC));
+                    vectorOBC[2] = 0.0f;
+                    float angleOBC = (float) Math.toDegrees(getAngle(vectorOBC,deviceVector));
+                    customView.setOBCData(bearingOBC, vectorOBC, angleOBC);
+                }
 
                 customView.setData(formatValue(event.values[0]),formatValue(event.values[1]),formatValue(event.values[2]),
                         formatValue(orientation[0]),formatValue(orientation[1]),formatValue(orientation[2]));
@@ -180,5 +218,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public float formatValue(float value){
         return (float) (Math.floor(value * 100) / 100);
     }
+
+    public float vectorMagnitude(float[] vec)
+    {
+        return (float) Math.sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+    }
+
+    float dotProduct(float[] a, float[] b)
+    {
+        return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+    }
+
+    public float getAngle(float[] a, float b[])
+    {
+        return (float) Math.acos(
+                dotProduct(a, b) / (vectorMagnitude(a) * vectorMagnitude(b))
+        );
+    }
+
 }
 
