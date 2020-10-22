@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.os.Build;
 import android.os.Bundle;
@@ -49,11 +50,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //Camera
     FrameLayout frame;
     SurfaceView surface;
-    private SurfaceHolder holder;
     private Camera camera;
     PreviewCamera previewCamera;
     CustomView customView;
-
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,9 +66,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             if (getApplicationContext().checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.CAMERA}, 3);
+
             }
         }
-
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -80,10 +79,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         surface = findViewById(R.id.surface);
         customView = new CustomView(this);
         layout = findViewById(R.id.layout);
-        camera = Camera.open();
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED){
+            camera = Camera.open();
+            previewCamera = new PreviewCamera(this, camera);
+            frame.addView(previewCamera);
+        }
+
         layout.addView(customView);
-        previewCamera = new PreviewCamera(this, camera);
-        frame.addView(previewCamera);
+
 
         // na wszelki wypadek ustawiamy lokacje, która potem zostanie nadpisana
         userLocation = new Location("Provider");
@@ -166,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
-                float[] cameraVector = {0, 0, 1};
+                float[] cameraVector = {0, 0, -1};
                 float[] deviceVector = new float[3];
                 deviceVector[0] = R[0]*cameraVector[0] +
                         R[1]*cameraVector[1] +
@@ -177,10 +182,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 deviceVector[2] = R[6]*cameraVector[0] +
                         R[7]*cameraVector[1] +
                         R[8]*cameraVector[2];
-
+                //Log.i()
+                customView.setDeviceVectorData(deviceVector);
                 if(userLocation!=null){
-                    //Log.i("DUPAAA", String.valueOf(userLocation.getLatitude())+" "+String.valueOf(userLocation.getLongitude()));
-                    // GMACH GLOWNY
                     float bearingGG = userLocation.bearingTo(GGLocation);
                     float[] vectorGG= new float[3];
                     vectorGG[0] = (float) Math.sin(Math.toRadians(bearingGG));

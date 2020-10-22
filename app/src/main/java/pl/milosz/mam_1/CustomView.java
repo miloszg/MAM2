@@ -15,6 +15,7 @@ import java.util.Arrays;
 class CustomView extends View {
     float x, y, z, azimut, pitch, roll;
     Double lat, lon;
+    float[] deviceVector = new float[3];
     //Gmach główny
     float bearingGG, angleGG;
     float [] vectorGG = new float[3];
@@ -62,13 +63,17 @@ class CustomView extends View {
         this.lon=lon;
     }
 
+    public void setDeviceVectorData(float[] deviceVector){
+        this.deviceVector=deviceVector;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         Paint paint = new Paint();
         //paint.setARGB(255, 255, 0, 0);
         Paint rectPaint = new Paint();
-        Rect r1 = new Rect(40, 40, 700, 400);
+        Rect r1 = new Rect(40, 40, 1250, 400);
         Rect r2 = new Rect(580, 700, 1400, 1700);
         rectPaint.setStyle(Paint.Style.FILL);
         rectPaint.setColor(Color.LTGRAY);
@@ -86,6 +91,10 @@ class CustomView extends View {
         canvas.drawText("Azimut: "+azimut, 200, 250, paint);
         canvas.drawText("Roll: "+roll, 200, 300, paint);
         canvas.drawText("Pitch: "+pitch, 200, 350, paint);
+
+        // device vector
+        canvas.drawText("Device Vector:", 600, 100, paint);
+        canvas.drawText("wektor: "+returnStringArray(deviceVector), 600, 150, paint);
 
         // Lokacja
         canvas.drawText("Lat: "+lat, 600, 750, paint);
